@@ -10,6 +10,7 @@ namespace Tanks
         private Complete.TankMovement m_Movement;
         // Reference to tank's shooting script, used to disable and enable control.
         private Complete.TankShooting m_Shooting;
+        
 
         private void Awake()
         {
@@ -20,7 +21,6 @@ namespace Tanks
             {
                 m_Movement.enabled = false;
                 m_Shooting.enabled = false;
-
                 enabled = false;
             }
         }

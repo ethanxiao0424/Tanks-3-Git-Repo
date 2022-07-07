@@ -4,13 +4,17 @@ using UnityEngine;
 using Photon.Pun;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using TMPro;
 
 namespace Tanks
 {
     public class MainMenu : MonoBehaviourPunCallbacks
     {
-        static MainMenu instance;
+        public static MainMenu instance; // 改成 Public
+        public MainMenu Instance => instance;
         private GameObject m_ui;
+        private TMP_InputField m_accountInput; // 新增 輸入匡
+        private Button m_loginButton; // 新增 登入按鈕
         private Button m_joinGameButton;
 
         void Awake()
@@ -21,17 +25,23 @@ namespace Tanks
                 return;
             }
             instance = this;
-            DontDestroyOnLoad(gameObject);
-
             m_ui = transform.FindAnyChild<Transform>("UI").gameObject;
+            m_accountInput = transform.FindAnyChild<TMP_InputField>("AccountInput"); // 抓取輸入匡元件
+            m_loginButton = transform.FindAnyChild<Button>("LoginButton"); // 抓取登入按鈕元件
             m_joinGameButton = transform.FindAnyChild<Button>("JoinGameButton");
 
-            m_ui.SetActive(true);
-            m_joinGameButton.interactable = false;
+            ResetUI(); // 抽出 UI 初始化
         }
 
-        public override void OnConnectedToMaster()
+        private void ResetUI() // 重置 UI
         {
+            m_ui.SetActive(true);
+            m_accountInput.gameObject.SetActive(true);
+            m_loginButton.gameObject.SetActive(true);
+            m_joinGameButton.gameObject.SetActive(false);
+
+            m_accountInput.interactable = true;
+            m_loginButton.interactable = true;
             m_joinGameButton.interactable = true;
         }
         public override void OnEnable()
@@ -46,20 +56,32 @@ namespace Tanks
             base.OnDisable();
             SceneManager.sceneLoaded -= OnSceneLoaded;
         }
+        public void Login() // 處理 登入伺服器流程
+        {
+            if (string.IsNullOrEmpty(m_accountInput.text))
+            {
+                Debug.Log("Please input your account!!");
+                return;
+            }
+            m_accountInput.interactable = false;
+            m_loginButton.interactable = false;
+
+            if (!GameManager.instance.ConnectToServer(m_accountInput.text))
+            {
+                Debug.Log("Connect to PUN Failed!!");
+                m_accountInput.interactable = true;
+                m_loginButton.interactable = true;
+            }
+        }
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             m_ui.SetActive(!PhotonNetwork.InRoom);
         }
-        // Start is called before the first frame update
-        void Start()
+        public override void OnConnectedToMaster() // 處理連線後 UI 變化
         {
-
-        }
-
-        // Update is called once per frame
-        void Update()
-        {
-
+            m_accountInput.gameObject.SetActive(false);
+            m_loginButton.gameObject.SetActive(false);
+            m_joinGameButton.gameObject.SetActive(true);
         }
     }
 }
